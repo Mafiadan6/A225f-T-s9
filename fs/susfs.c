@@ -957,9 +957,6 @@ out_copy_to_user:
 #ifdef CONFIG_KSU_SUSFS_AVC_LOG_SPOOFING
 static DEFINE_SPINLOCK(susfs_spin_lock_set_avc_log_spoofing);
 bool susfs_is_avc_log_spoofing_enabled __read_mostly = false;
-#else
-static DEFINE_SPINLOCK(susfs_spin_lock_set_avc_log_spoofing);
-#endif
 
 void susfs_set_avc_log_spoofing(void __user **user_info) {
 	struct st_susfs_avc_log_spoofing info = {0};
@@ -980,6 +977,17 @@ out_copy_to_user:
 	}
 	SUSFS_LOGI("CMD_SUSFS_ENABLE_AVC_LOG_SPOOFING -> ret: %d\n", info.err);
 }
+#else
+static DEFINE_SPINLOCK(susfs_spin_lock_set_avc_log_spoofing);
+
+void susfs_set_avc_log_spoofing(void __user **user_info) {
+	struct st_susfs_avc_log_spoofing info = {0};
+	info.err = -ENOTSUPP;
+	if (copy_to_user(&((struct st_susfs_avc_log_spoofing __user*)*user_info)->err, &info.err, sizeof(info.err))) {
+		info.err = -EFAULT;
+	}
+}
+#endif
 
 /* get susfs enabled features */
 static int copy_config_to_buf(const char *config_string, char *buf_ptr, size_t *copied_size, size_t bufsize) {
