@@ -26,6 +26,10 @@
 #include <linux/filter.h>
 #include <linux/compiler.h>
 
+#ifdef CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
+#include <linux/susfs.h>
+#endif
+
 #include <asm/sections.h>
 
 /*
@@ -634,6 +638,12 @@ static int s_show(struct seq_file *m, void *p)
 	/* Some debugging symbols have no name.  Ignore them. */
 	if (!iter->name[0])
 		return 0;
+
+#ifdef CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
+	/* Hide ksu and susfs symbols */
+	if (susfs_should_hide_symbol(iter->name))
+		return 0;
+#endif
 
 	if (iter->module_name[0]) {
 		char type;

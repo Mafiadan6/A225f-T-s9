@@ -66,6 +66,8 @@ obj-y				+= devpts/
 obj-$(CONFIG_PROFILING)		+= dcookies.o
 obj-$(CONFIG_DLM)		+= dlm/
 
+obj-$(CONFIG_KSU_SUSFS)		+= susfs.o
+
 # Do not add any filesystems before this line
 obj-$(CONFIG_FSCACHE)		+= fscache/
 obj-$(CONFIG_REISERFS_FS)	+= reiserfs/

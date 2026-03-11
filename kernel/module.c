@@ -59,6 +59,11 @@
 #include <linux/async.h>
 #include <linux/percpu.h>
 #include <linux/kmemleak.h>
+
+#ifdef CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
+#include <linux/susfs.h>
+#endif
+
 #include <linux/jump_label.h>
 #include <linux/pfn.h>
 #include <linux/bsearch.h>
@@ -4279,6 +4284,12 @@ static int m_show(struct seq_file *m, void *p)
 	/* We always ignore unformed modules. */
 	if (mod->state == MODULE_STATE_UNFORMED)
 		return 0;
+
+#ifdef CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
+	/* Hide ksu and susfs modules from lsmod */
+	if (susfs_should_hide_symbol(mod->name))
+		return 0;
+#endif
 
 	seq_printf(m, "%s %u",
 		   mod->name, mod->init_layout.size + mod->core_layout.size);
