@@ -1,0 +1,5 @@
+config KSU_KPM
+    bool "KernelSU KPM support"
+    default y
+    help
+      Enable KernelSU Kernel Package Manager support

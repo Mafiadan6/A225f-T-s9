@@ -1,0 +1,2 @@
+
+source "kernel/kpm/Kconfig"
