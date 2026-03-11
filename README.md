@@ -31,6 +31,11 @@ Custom kernel source for **Samsung Galaxy A22 (A225F/SM-A225M)** with **KernelSU
 - ✅ **SUS_MAP** - Hide mmapped files from proc maps
 - ✅ **AVC_LOG_SPOOFING** - Spoof SELinux AVC log messages
 
+### KPM (Kernel Package Manager)
+- ✅ **KPM Module Loader** - Load .kpm modules at boot
+- ✅ **KPatch-Next Compatible** - Full kernel patching support
+- ✅ **KALLSYMS_ALL Enabled** - All kernel symbols exported for patching
+
 ### Additional Features
 - ✅ **kallsyms hiding** - Hide KSU/susfs symbols
 - ✅ **Module hiding** - Hide modules from lsmod
@@ -174,6 +179,16 @@ fastboot flash boot new-boot.img
 ---
 
 ## 📝 Changelog
+
+### v2.0.0 - KPM Support Update
+- ✅ **KPM Module Loader** - Kernel Package Manager support added
+- ✅ **KALLSYMS_ALL Enabled** - Required for KPatch-Next and KPM modules
+- ✅ **KPatch-Next Compatible** - Full kernel patching support
+- ✅ **All susfs v2.0.0 features** - Fully functional
+- ✅ **KernelSU-Next v3.1.0-legacy-susfs** - Latest version
+- ✅ **Device Support** - All MT6768 A22 4G variants (SM-A225F/M/G/N/B)
+- ✅ **Build Improvements** - Clean compilation with all features
+
 
 ### v1.0 - Initial Release
 - ✅ KernelSU-Next v3.1.0-legacy-susfs integrated
