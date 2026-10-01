@@ -81,18 +81,25 @@ jobs:
         with:
           name: KSUN_SUSFS_A22_Kernel
           path: KSUN_SUSFS_A22_Kernel.zip
+          # artifact name stays stable; the release asset is per-run
           if-no-files-found: error
           retention-days: 30
 
       - name: Publish zip to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ env.RELEASE_TAG }}
+          BASE_TAG: ${{ env.RELEASE_TAG }}
+          RUN_NUMBER: ${{ github.run_number }}
+          SHORT_SHA: ${{ github.sha }}
+          BUILD_DATE: ${{ github.event.head_commit.timestamp }}
         run: |
           set -euo pipefail
-          cat > notes.md <<'NOTES_EOF'
-          Automated build of commit ${{ github.sha }}.
+          tag="${BASE_TAG}-build.${RUN_NUMBER}"
+          zip="KSUN_SUSFS_A22_Kernel_build${RUN_NUMBER}.zip"
 
+          cp KSUN_SUSFS_A22_Kernel.zip "$zip"
+
+          cat > notes.md <<'NOTES_EOF'
           Flashable AnyKernel3 zip for SM-A225F/A225M.
 
           Contents:
@@ -103,18 +110,17 @@ jobs:
           KSU: Mafiadan6/KernelSU-Next @ legacy-susfs-v2-nosusfsextra
           susfs code: v2.0.0
           NOTES_EOF
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" KSUN_SUSFS_A22_Kernel.zip --clobber
-            gh release edit "$TAG" --notes-file notes.md --title "A225f-T-s9 Kernel - KSU legacy-susfs-v2 + susfs"
-            echo "::notice::Replaced asset on existing release $TAG"
-          else
-            gh release create "$TAG" KSUN_SUSFS_A22_Kernel.zip \
-              --title "A225f-T-s9 Kernel - KSU legacy-susfs-v2 + susfs" \
-              --notes-file notes.md
-            echo "::notice::Created release $TAG"
-          fi
-          gh release view "$TAG" --json url,assets \
-            --jq '.url, (.assets[]|.name+" "+(.size|tostring))'
+          {
+            printf 'Build #%s from commit %s\n\n' "$RUN_NUMBER" "$SHORT_SHA"
+            cat notes.md
+          } > release-notes.md
+
+          gh release create "$tag" "$zip" \
+            --title "A225f-T-s9 Kernel - build $RUN_NUMBER" \
+            --notes-file release-notes.md
+
+          gh release view "$tag" --json url,assets \
+            --jq '.url, (.assets[]|.name+" "+((.size/1048576)|floor|tostring)+" MB")'
 
       - name: Upload Image
         uses: actions/upload-artifact@v4
