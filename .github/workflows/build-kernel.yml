@@ -107,8 +107,26 @@ jobs:
             - anykernel.sh, META-INF, tools, modules, patch, ramdisk
               AnyKernel3 installer shell
 
-          KSU: Mafiadan6/KernelSU-Next @ legacy-susfs-v2-nosusfsextra
-          susfs code: v2.0.0
+          Flash with AnyKernel3 in recovery, or extract and repack via Kitchen.
+
+          Kernel: Linux 4.14.186 (arm64, MediaTek MT6768)
+          KSU: Mafiadan6/KernelSU-Next @ legacy-susfs-v2-nosusfsextra, version 33227
+          susfs: v2.0.0 code (the SUSFS_VERSION string reads v2.2.0, which is a label only)
+          NoMount: vfs path redirection, built in as CONFIG_NOMOUNT=y
+
+          Pair with the KernelSU manager matching the version above.
+
+          Local KSU fixes carried over sidex15/legacy-susfs-v2:
+            - call susfs_run_sus_path_loop(new_uid) directly instead of
+              deferring to the susfs_extra_works workqueue, which this
+              kernel does not define
+            - route strscpy_pad through the __strscpy_pad compat wrapper,
+              since strscpy_pad only exists from Linux 5.8
+
+          NoMount notes:
+            The kernel side of the subsystem is included here. Its WebUI and
+            module management are a separate KernelSU metamodule, installed
+            from the maxsteeel/nomount releases after flashing.
           NOTES_EOF
           {
             printf 'Build #%s from commit %s\n\n' "$RUN_NUMBER" "$SHORT_SHA"
