@@ -15,7 +15,7 @@ permissions:
   contents: write
 
 env:
-  RELEASE_TAG: v2.0.0
+  RELEASE_TAG: v2.0.1
 
 jobs:
   build:
@@ -47,12 +47,8 @@ jobs:
           }
           echo "KernelSU-Next: $(git -C KernelSU-Next describe --tags 2>/dev/null || echo unknown)"
 
-      - name: Free disk space
-        run: |
-          df -h /
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
-          sudo rm -rf /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"
-          df -h /
+      - name: Report free disk space
+        run: df -h /
 
       - name: Build
         run: |
@@ -94,22 +90,27 @@ jobs:
           TAG: ${{ env.RELEASE_TAG }}
         run: |
           set -euo pipefail
-          notes="Automated build of commit ${{ github.sha }}.
+          cat > notes.md <<'NOTES_EOF'
+          Automated build of commit ${{ github.sha }}.
 
-          Flashable AnyKernel3 zip for SM-A225F/A225M, containing:
-            - Image.gz (gzip-compressed kernel Image)
-            - anykernel.sh, META-INF/, tools/, modules/, patch/, ramdisk/
-              (AnyKernel3 installer shell from the "kernel shell" folder)
+          Flashable AnyKernel3 zip for SM-A225F/A225M.
+
+          Contents:
+            - Image.gz   gzip-compressed kernel Image
+            - anykernel.sh, META-INF, tools, modules, patch, ramdisk
+              AnyKernel3 installer shell
 
           KSU: Mafiadan6/KernelSU-Next @ legacy-susfs-v2-nosusfsextra
-          susfs: v2.0.0"
+          susfs code: v2.0.0
+          NOTES_EOF
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" KSUN_SUSFS_A22_Kernel.zip --clobber
+            gh release edit "$TAG" --notes-file notes.md --title "A225f-T-s9 Kernel - KSU legacy-susfs-v2 + susfs"
             echo "::notice::Replaced asset on existing release $TAG"
           else
             gh release create "$TAG" KSUN_SUSFS_A22_Kernel.zip \
-              --title "A225f-T-s9 Kernel (KSU + susfs)" \
-              --notes "$notes"
+              --title "A225f-T-s9 Kernel - KSU legacy-susfs-v2 + susfs" \
+              --notes-file notes.md
             echo "::notice::Created release $TAG"
           fi
           gh release view "$TAG" --json url,assets \
@@ -132,3 +133,12 @@ jobs:
           name: build-log
           path: build.log
           retention-days: 7
+
+      - name: Remove build output
+        run: |
+          set -euo pipefail
+          size_before="$(du -sh out 2>/dev/null | cut -f1 || echo unknown)"
+          echo "out/ before cleanup: ${size_before:-none}"
+          rm -rf out
+          df -h /
+          echo "::notice::Removed out/ (${size_before:-n/a}) after upload"
