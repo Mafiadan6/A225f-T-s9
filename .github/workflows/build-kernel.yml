@@ -11,6 +11,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
+env:
+  RELEASE_TAG: v2.0.0
+
 jobs:
   build:
     # ubuntu-latest is x86_64, which is what the bundled toolchain/ expects.
@@ -61,6 +67,50 @@ jobs:
           ls -lh out/arch/arm64/boot/Image* 2>/dev/null || echo "no Image produced"
           file out/arch/arm64/boot/Image 2>/dev/null || true
           tail -40 build.log || true
+
+      - name: Package flashable zip
+        run: |
+          set -euo pipefail
+          stage="$(mktemp -d)"
+          cp out/arch/arm64/boot/Image.gz "$stage/image.gz"
+          cp out/arch/arm64/boot/Image "$stage/Image"
+          ( cd "$stage" && zip -q -r -9 "$GITHUB_WORKSPACE/KSUN_SUSFS_A22_Kernel.zip" image.gz Image )
+          ls -lh KSUN_SUSFS_A22_Kernel.zip
+          unzip -l KSUN_SUSFS_A22_Kernel.zip
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: KSUN_SUSFS_A22_Kernel
+          path: KSUN_SUSFS_A22_Kernel.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish zip to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ env.RELEASE_TAG }}
+        run: |
+          set -euo pipefail
+          notes="Automated build of commit ${{ github.sha }}.
+
+          Contents of the zip:
+            - image.gz  (gzip-compressed kernel Image)
+            - Image     (raw kernel Image, for Kitchen boot.img repack)
+
+          KSU: Mafiadan6/KernelSU-Next @ legacy-susfs-v2-nosusfsextra
+          susfs: v2.0.0"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" KSUN_SUSFS_A22_Kernel.zip --clobber
+            echo "::notice::Replaced asset on existing release $TAG"
+          else
+            gh release create "$TAG" KSUN_SUSFS_A22_Kernel.zip \
+              --title "A225f-T-s9 Kernel (KSU + susfs)" \
+              --notes "$notes"
+            echo "::notice::Created release $TAG"
+          fi
+          gh release view "$TAG" --json url,assets \
+            --jq '.url, (.assets[]|.name+" "+(.size|tostring))'
 
       - name: Upload Image
         uses: actions/upload-artifact@v4
