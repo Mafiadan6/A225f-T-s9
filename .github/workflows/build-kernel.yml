@@ -72,8 +72,11 @@ jobs:
         run: |
           set -euo pipefail
           stage="$(mktemp -d)"
-          cp out/arch/arm64/boot/Image.gz "$stage/image.gz"
-          ( cd "$stage" && zip -q -r -9 "$GITHUB_WORKSPACE/KSUN_SUSFS_A22_Kernel.zip" image.gz )
+          cp -a anykernel/. "$stage/"
+          cp out/arch/arm64/boot/Image.gz "$stage/Image.gz"
+          ( cd "$stage" && zip -q -r -9 "$GITHUB_WORKSPACE/KSUN_SUSFS_A22_Kernel.zip" . )
+          ls -lh KSUN_SUSFS_A22_Kernel.zip
+          unzip -l KSUN_SUSFS_A22_Kernel.zip
           ls -lh KSUN_SUSFS_A22_Kernel.zip
           unzip -l KSUN_SUSFS_A22_Kernel.zip
 
@@ -93,8 +96,10 @@ jobs:
           set -euo pipefail
           notes="Automated build of commit ${{ github.sha }}.
 
-          Contents of the zip:
-            - image.gz  (gzip-compressed kernel Image)
+          Flashable AnyKernel3 zip for SM-A225F/A225M, containing:
+            - Image.gz (gzip-compressed kernel Image)
+            - anykernel.sh, META-INF/, tools/, modules/, patch/, ramdisk/
+              (AnyKernel3 installer shell from the "kernel shell" folder)
 
           KSU: Mafiadan6/KernelSU-Next @ legacy-susfs-v2-nosusfsextra
           susfs: v2.0.0"

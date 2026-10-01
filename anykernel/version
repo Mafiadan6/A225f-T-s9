@@ -1,0 +1,39 @@
+==========================
+NAME    : KERNELSU-NEXT SUSFS
+======================
+DEVICE  : SM-A225F SM-A225M
+==================
+Support : Oneui/GSI
+==============
+Selinux : Enforcing Toggleable
+==============
+Version : 5
+==============
+Chipset : Mediatek
+==============
+Android : Android 11_16 R
+==============
+Dev : bitcockiii
+==============
+
+Modifications:
+Samsung security disabled
+Disabled KNOX net implementation
+Separated Samsung usb MTP
+Selinux Toggle
+cpufreq v1 Undervolt -30 millivolt
+Enable interactive and conservative governors
+sched/fair: Reduce latency
+optimized kernel samepage merger
+NEON accelerated XOR implementation
+pagevec modification +7%
+optimized memcmp
+faster deepsleep
+3x faster integer sqrt
+vbmeta entries killed
+Wifi driver Built in
+TCP congestion: bbr1 + bbr2
+
+═══════════════════════════════════
+          M A S T E R M I N D         
+═══════════════════════════════════
