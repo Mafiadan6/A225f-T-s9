@@ -252,7 +252,7 @@ out/arch/arm64/boot/Image.gz
 | Component | Version | Source |
 |-----------|---------|--------|
 | Kernel | 4.14.186 | This repository |
-| KernelSU-Next | 33227 | [`Mafiadan6/KernelSU-Next`](https://github.com/Mafiadan6/KernelSU-Next) @ `legacy-susfs-v2-nosusfsextra` |
+| KernelSU-Next | 33227 | **[Mafiadan6/KernelSU-Next](https://github.com/Mafiadan6/KernelSU-Next)** @ `legacy-susfs-v2-nosusfsextra` (fork of [sidex15's `legacy-susfs-v2`](https://github.com/sidex15/KernelSU-Next/tree/legacy-susfs-v2)) |
 | KernelSU manager | v3.4.0 (33294) | [KernelSU-Next releases](https://github.com/KernelSU-Next/KernelSU-Next/releases/tag/v3.4.0) |
 | susfs | v2.0.0 | [simonpunk/susfs4ksu](https://gitlab.com/simonpunk/susfs4ksu) |
 | NoMount | v2.0.0 (vendored `c5fad9d`) | [maxsteeel/nomount](https://github.com/maxsteeel/nomount) |
@@ -275,6 +275,102 @@ Two patches are applied on top of `legacy-susfs-v2`, needed for this 4.14 tree:
    `strscpy_pad` only exists from Linux 5.8, and this tree is 4.14.186.
 
 Without these the kernel does not link at all.
+
+---
+
+## 🍴 KernelSU-Next Fork
+
+This kernel does **not** build against upstream `KernelSU-Next/dev`. It builds
+against a fork kept specifically for this device.
+
+| | |
+|---|---|
+| **Fork** | **[github.com/Mafiadan6/KernelSU-Next](https://github.com/Mafiadan6/KernelSU-Next)** |
+| **Branch** | `legacy-susfs-v2-nosusfsextra` |
+| **Pinned commit** | `1b7007dbbee5896382f3c2b4118a698a8ad6f858` |
+| **Based on** | [sidex15/KernelSU-Next](https://github.com/sidex15/KernelSU-Next) @ `legacy-susfs-v2` |
+| **Divergence** | 2 commits ahead, 0 behind |
+| **Reports version** | 33227 |
+| **License** | GPL-3.0 |
+
+### Why a fork
+
+Upstream tracks a non-GKI `dev` branch. This device is a MediaTek 4.14 kernel,
+which upstream no longer builds cleanly against — most notably `strscpy_pad`
+does not exist before Linux 5.8. sidex15's `legacy-susfs-v2` branch restores
+legacy-kernel support and carries the susfs integration. Our fork adds the two
+fixes below on top of that.
+
+`sidex15/legacy-susfs-v2` is a direct **ancestor** of our branch, and
+`sidex15/dev` is **not** — so this work is derived from his legacy branch, not
+from upstream `dev`.
+
+### Patches carried by the fork
+
+Both are authored by [@Mafiadan6](https://github.com/Mafiadan6) and must be
+preserved when syncing with upstream.
+
+| Commit | File | Change |
+|--------|------|--------|
+| [`c9e63c2f`](https://github.com/Mafiadan6/KernelSU-Next/commit/c9e63c2fa133619ec2902bbd2821e436a55120d5) | `kernel/hook/setuid_hook.c` | Call `susfs_run_sus_path_loop(new_uid)` directly; drop the `susfs_extra_works` workqueue, which this tree does not define |
+| [`1b7007db`](https://github.com/Mafiadan6/KernelSU-Next/commit/1b7007dbbee5896382f3c2b4118a698a8ad6f858) | `kernel/policy/allowlist.c` | `strscpy_pad()` → `__strscpy_pad()` compat wrapper |
+
+**Why the wrapper works here:** `__strscpy_pad()` in
+`kernel/compat/kernel_compat.h` dispatches on `LINUX_VERSION_CODE` — it calls
+the real `strscpy_pad()` at 4.14.222+, and below that emulates the
+NUL-padding behaviour using `strscpy()` plus `memset()`. This kernel is
+**4.14.186**, so the emulation path is what actually executes.
+
+### Updating from sidex15
+
+Our branch sits 2 ahead / 0 behind `sidex15/legacy-susfs-v2`. When pulling his
+updates, rebase rather than merge so the two fix commits stay on top:
+
+```bash
+git clone --recurse-submodules https://github.com/Mafiadan6/A225f-T-s9.git
+cd A225f-T-s9/KernelSU-Next
+
+git remote add sidex15 https://github.com/sidex15/KernelSU-Next.git
+git fetch sidex15
+
+# Preview what you are picking up
+git log --oneline HEAD..sidex15/legacy-susfs-v2
+
+# Replay our two fixes on top of his branch
+git rebase sidex15/legacy-susfs-v2
+
+# Resolve conflicts, then:
+#   - confirm susfs_run_sus_path_loop(new_uid) is still called directly
+#   - confirm strscpy_pad() is still routed through __strscpy_pad()
+#   - confirm no reference to susfs_extra_works has come back
+
+git push origin legacy-susfs-v2-nosusfsextra
+```
+
+Afterwards bump the submodule gitlink from the parent repository and let CI
+verify the link:
+
+```bash
+cd ..
+git add KernelSU-Next
+git commit -m "Update KernelSU-Next fork to sidex15/legacy-susfs-v2"
+git push
+```
+
+### Submodule remotes
+
+Inside `KernelSU-Next/`:
+
+| Remote | Points to |
+|--------|-----------|
+| `myfork` | `github.com/Mafiadan6/KernelSU-Next.git` (ours) |
+| `origin` | `github.com/KernelSU-Next/KernelSU-Next.git` (upstream) |
+| `sidex15` | `github.com/sidex15/KernelSU-Next.git` (legacy-susfs-v2 author) |
+
+Clone with `--recurse-submodules` so the pinned commit is fetched. To move the
+fork's default branch to match our branch, set it in the fork's settings —
+currently the fork's default is `legacy-susfs-v2`, while this kernel pins
+`legacy-susfs-v2-nosusfsextra`.
 
 ---
 
@@ -386,6 +482,8 @@ adb shell uname -a    # should read 4.14.186-爪卂丂ㄒ乇尺爪工刀ᗪ丂
 - **[@physwizz](https://t.me/physwizz)** — kernel backporting and base
   development
 - **KernelSU-Next** — [KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next)
+- **[sidex15](https://github.com/sidex15)** — [`legacy-susfs-v2`](https://github.com/sidex15/KernelSU-Next/tree/legacy-susfs-v2)
+  branch, the non-GKI/susfs base this fork is built on
 - **simonpunk** — [susfs4ksu](https://gitlab.com/simonpunk/susfs4ksu)
 - **maxsteeel** — [nomount](https://github.com/maxsteeel/nomount)
 
