@@ -62,6 +62,9 @@
 
 #ifdef CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
 #include <linux/susfs.h>
+#ifdef CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
+#include <linux/susfs_def.h>
+#endif
 #endif
 
 #include <linux/jump_label.h>
@@ -4287,7 +4290,24 @@ static int m_show(struct seq_file *m, void *p)
 
 #ifdef CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
 	/* Hide ksu and susfs modules from lsmod */
-	if (susfs_should_hide_symbol(mod->name))
+	if (susfs_starts_with(mod->name, "ksu_") ||
+		susfs_starts_with(mod->name, "__ksu_") ||
+		susfs_starts_with(mod->name, "susfs_") ||
+		susfs_starts_with(mod->name, "ksud") ||
+		susfs_starts_with(mod->name, "is_ksu_") ||
+		susfs_starts_with(mod->name, "is_manager_") ||
+		susfs_starts_with(mod->name, "escape_to_") ||
+		susfs_starts_with(mod->name, "setup_selinux") ||
+		susfs_starts_with(mod->name, "track_throne") ||
+		susfs_starts_with(mod->name, "on_post_fs_data") ||
+		susfs_starts_with(mod->name, "try_umount") ||
+		susfs_starts_with(mod->name, "kernelsu") ||
+		susfs_starts_with(mod->name, "__initcall__kmod_kernelsu") ||
+		susfs_starts_with(mod->name, "apply_kernelsu") ||
+		susfs_starts_with(mod->name, "handle_sepolicy") ||
+		susfs_starts_with(mod->name, "getenforce") ||
+		susfs_starts_with(mod->name, "setenforce") ||
+		susfs_starts_with(mod->name, "is_zygote"))
 		return 0;
 #endif
 
