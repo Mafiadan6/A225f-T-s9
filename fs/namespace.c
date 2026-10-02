@@ -1117,6 +1117,9 @@ bool legitimize_mnt(struct vfsmount *bastard, unsigned seq)
  */
 struct mount *__lookup_mnt(struct vfsmount *mnt, struct dentry *dentry)
 {
+struct hlist_head *head = m_hash(mnt, dentry);
+	struct mount *p;
+
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	if (susfs_is_current_proc_umounted()) {
 		hlist_for_each_entry_rcu(p, head, mnt_hash)
@@ -1125,9 +1128,6 @@ struct mount *__lookup_mnt(struct vfsmount *mnt, struct dentry *dentry)
 		return NULL;
 	}
 #endif
-
-	struct hlist_head *head = m_hash(mnt, dentry);
-	struct mount *p;
 
 	hlist_for_each_entry_rcu(p, head, mnt_hash)
 #if defined(CONFIG_KDP_NS) || defined(CONFIG_RUSTUH_KDP_NS)

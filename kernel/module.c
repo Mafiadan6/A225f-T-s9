@@ -62,9 +62,7 @@
 
 #ifdef CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
 #include <linux/susfs.h>
-#ifdef CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
 #include <linux/susfs_def.h>
-#endif
 #endif
 
 #include <linux/jump_label.h>
