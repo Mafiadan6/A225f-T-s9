@@ -111,17 +111,23 @@ jobs:
 
           Kernel: Linux 4.14.186 (arm64, MediaTek MT6768)
           KSU: Mafiadan6/KernelSU-Next @ legacy-susfs-v2-nosusfsextra, version 33227
-          susfs: v2.0.0 code (the SUSFS_VERSION string reads v2.2.0, which is a label only)
+          susfs: v2.3.0 (complete 4.14 patch)
           NoMount: vfs path redirection, built in as CONFIG_NOMOUNT=y
 
           Pair with the KernelSU manager matching the version above.
 
           Local KSU fixes carried over sidex15/legacy-susfs-v2:
-            - call susfs_run_sus_path_loop(new_uid) directly instead of
-              deferring to the susfs_extra_works workqueue, which this
-              kernel does not define
             - route strscpy_pad through the __strscpy_pad compat wrapper,
               since strscpy_pad only exists from Linux 5.8
+            - drop the susfs try-umount and sus_path loop calls that
+              susfs v2.3.0 removed; sdcard hiding now runs through the
+              fsnotify monitor started by the manager
+
+          susfs notes:
+            CONFIG_KSU_SUSFS_TRY_UMOUNT is off. susfs v2.3.0 replaced
+            try-umount with an fsnotify-based sdcard monitor, so there is
+            no separate try-umount pass to configure. Manual hook mode is
+            in use: CONFIG_KSU_MANUAL_HOOK=y with CONFIG_KPROBES off.
 
           NoMount notes:
             The kernel side of the subsystem is included here. Its WebUI and

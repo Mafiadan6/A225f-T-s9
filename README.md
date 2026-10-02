@@ -2,7 +2,7 @@
 
 [![Kernel Version](https://img.shields.io/badge/Kernel-4.14.186-blue)]()
 [![KernelSU Version](https://img.shields.io/badge/KernelSU-33227-green)]()
-[![susfs Version](https://img.shields.io/badge/susfs-v2.0.0-orange)]()
+[![susfs Version](https://img.shields.io/badge/susfs-v2.3.0-orange)]()
 [![NoMount](https://img.shields.io/badge/NoMount-v2.0.0-purple)]()
 [![Platform](https://img.shields.io/badge/Platform-MT6768-red)]()
 [![Android Version](https://img.shields.io/badge/Android-11--13-lightgrey)]()
@@ -25,11 +25,10 @@ tagged release, so previous builds stay downloadable.
 - ✅ **Module support** — load KSU modules
 - ✅ **ksud bundled** — userspace helper shipped with the kernel
 
-### susfs v2.0.0 (Suspicious File System)
+### susfs v2.3.0 (Suspicious File System)
 - ✅ **SUS_PATH** — hide suspicious paths from system calls
 - ✅ **SUS_MOUNT** — hide mount entries from `/proc/[mounts|mountinfo]`
 - ✅ **SUS_KSTAT** — spoof file/directory statistics
-- ✅ **TRY_UMOUNT** — auto-umount KSU paths on app spawn
 - ✅ **SPOOF_UNAME** — spoof kernel version from the `uname` syscall
 - ✅ **HIDE_KSU_SUSFS_SYMBOLS** — hide symbols from `/proc/kallsyms`
 - ✅ **SPOOF_CMDLINE** — spoof `/proc/cmdline` and `/proc/bootconfig`
@@ -37,9 +36,14 @@ tagged release, so previous builds stay downloadable.
 - ✅ **SUS_MAP** — hide mmapped files from proc maps
 - ✅ **AVC_LOG_SPOOFING** — spoof SELinux AVC log messages
 
-> `include/linux/susfs.h` sets `SUSFS_VERSION` to `v2.2.0`. That string is a
-> **label only** — the susfs code in this tree is upstream v2.0.0. Use v2.0.0
-> when comparing against upstream releases.
+Ported from the complete upstream v2.3.0 patch for Linux 4.14
+([JackA1ltman/NonGKI_Kernel_Build_2nd](https://github.com/JackA1ltman/NonGKI_Kernel_Build_2nd/tree/mainline/Patches/Patch)).
+`SUSFS_VERSION` in `include/linux/susfs.h` is the real version, not a label.
+
+**TRY_UMOUNT is off.** susfs v2.3.0 removed that feature, replacing it with an
+fsnotify-based sdcard monitor started from the manager via
+`susfs_start_sdcard_monitor_fn()`. Hiding happens automatically; there is no
+separate try-umount pass to configure.
 
 ### NoMount (VFS path redirection)
 - ✅ **In-RAM module injection** — overlay files served from memory, no mounts
@@ -254,7 +258,7 @@ out/arch/arm64/boot/Image.gz
 | Kernel | 4.14.186 | This repository |
 | KernelSU-Next | 33227 | **[Mafiadan6/KernelSU-Next](https://github.com/Mafiadan6/KernelSU-Next)** @ `legacy-susfs-v2-nosusfsextra` (fork of [sidex15's `legacy-susfs-v2`](https://github.com/sidex15/KernelSU-Next/tree/legacy-susfs-v2)) |
 | KernelSU manager | v3.4.0 (33294) | [KernelSU-Next releases](https://github.com/KernelSU-Next/KernelSU-Next/releases/tag/v3.4.0) |
-| susfs | v2.0.0 | [simonpunk/susfs4ksu](https://gitlab.com/simonpunk/susfs4ksu) |
+| susfs | v2.3.0 (4.14 patch) | [JackA1ltman/NonGKI_Kernel_Build_2nd](https://github.com/JackA1ltman/NonGKI_Kernel_Build_2nd/tree/mainline/Patches/Patch) |
 | NoMount | v2.0.0 (vendored `c5fad9d`) | [maxsteeel/nomount](https://github.com/maxsteeel/nomount) |
 | Toolchain | clang r383902 + GCC 4.9 | `toolchain/` |
 
@@ -446,6 +450,21 @@ adb shell uname -a    # should read 4.14.186-爪卂丂ㄒ乇尺爪工刀ᗪ丂
 ---
 
 ## 📝 Changelog
+
+### susfs v2.3.0 — complete 4.14 port
+- ✅ **Full upstream v2.3.0 patch** applied across all 20 files — the earlier
+      port defined the API but left most VFS hooks unwired
+- ✅ **SUS_MOUNT engine** — `fs/namespace.c` now consumes
+      `susfs_hide_sus_mnts_for_non_su_procs`, which was previously set but
+      never read
+- ✅ **Mount/path leak closed** — native detector reports clean on
+      `v2.0.1-build.16`
+- ✅ **Adapted to Samsung's 4.14** — `show_map_vma` has no `is_pid` param,
+      `smap_gather_stats` returns `void`, inotify uses `mark->mask`
+- ✅ **Manual hooks retained** — `CONFIG_KSU_MANUAL_HOOK=y`, `CONFIG_KPROBES`
+      off; no kprobe dependency
+- ⚠️ **TRY_UMOUNT removed** upstream in v2.3.0; replaced by the fsnotify
+      sdcard monitor, so `CONFIG_KSU_SUSFS_TRY_UMOUNT` is off
 
 ### Build 9 — NoMount
 - ✅ **NoMount VFS path redirection** built in as `CONFIG_NOMOUNT=y`, with
